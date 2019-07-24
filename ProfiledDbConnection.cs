@@ -1,11 +1,9 @@
 
 using Microsoft.Extensions.Logging;
-using System;
 using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
 using System.Data.SqlClient;
-using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
@@ -34,60 +32,37 @@ namespace stuartalexanderltd.dapper
 
         public override void ChangeDatabase(string databaseName)
         {
-            Action(() => { _dbConnection.ChangeDatabase(databaseName); }, "Change Database Name");
+            ProfiledDbExtensions.Action(_logger, () => { _dbConnection.ChangeDatabase(databaseName); }, "Change Database Name");
         }
 
         public override void Open()
         {
-            Action(() => { _dbConnection.Open(); }, "Connection Opened");
+            ProfiledDbExtensions.Action(_logger, () => { _dbConnection.Open(); }, "Connection Opened");
         }
 
         public override Task OpenAsync(CancellationToken cancellationToken)
         {
-            return ActionAsync(() => { return _dbConnection.OpenAsync(cancellationToken); }, "Connection Opened Async");
+            return ProfiledDbExtensions.Action(_logger, () => { return _dbConnection.OpenAsync(cancellationToken); }, "Connection Opened Async");
         }
 
         protected override DbCommand CreateDbCommand()
         {
-            return Action(() => { return _dbConnection.CreateCommand(); }, "Create DB command");
+            return ProfiledDbExtensions.Action(_logger, () => { return _dbConnection.CreateCommand(); }, "Create DB command");
         }
 
         public override void EnlistTransaction(Transaction transaction)
         {
-            Action(() => { _dbConnection.EnlistTransaction(transaction); }, "Enlisting in transaction");
+            ProfiledDbExtensions.Action(_logger, () => { _dbConnection.EnlistTransaction(transaction); }, "Enlisting in transaction");
         }
 
         public override void Close()
         {
-            Action(() => { _dbConnection.Close(); }, "Connection Closed");
+            ProfiledDbExtensions.Action(_logger, () => { _dbConnection.Close(); }, "Connection Closed");
         }
 
         protected override DbTransaction BeginDbTransaction(System.Data.IsolationLevel isolationLevel)
         {
-            return Action(() => { return _dbConnection.BeginTransaction(); }, "Begin DB Transaction");
-        }
-
-        private void Action(Action func, string message)
-        {
-            var sw = new Stopwatch();
-            func();
-            sw.Stop();
-            _logger.LogInformation($"{message} - {sw.ElapsedMilliseconds}ms");
-        }
-        private T Action<T>(Func<T> func, string message)
-        {
-            var sw = new Stopwatch();
-            var result = func();
-            sw.Stop();
-            _logger.LogInformation($"{message} - {sw.ElapsedMilliseconds}ms");
-            return result;
-        }
-        private async Task ActionAsync(Func<Task> func, string message)
-        {
-            var sw = new Stopwatch();
-            await func();
-            sw.Stop();
-            _logger.LogInformation($"{message} - {sw.ElapsedMilliseconds}ms");
+            return ProfiledDbExtensions.Action(_logger, () => { return _dbConnection.BeginTransaction(); }, "Begin DB Transaction");
         }
     }
 }
